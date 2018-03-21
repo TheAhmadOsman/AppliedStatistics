@@ -1,0 +1,523 @@
+---
+title: "FifaAnalysisABR"
+author: "Ahmad, Beka, and Rafael"
+date: "11/13/2017"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+# Set echo to true and global figure size 
+knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.height=4)
+```
+ 
+## Introduction
+
+In the decade since, escalating payouts from domestic and international television agreements, kit deals, sponsors, Champions League, and an influx of wealthy ownership groups have resulted in surging soccer wages around the world. With money being a dominating factor in soccer player’s transfers, new contracts and resigning clauses, the ability to evaluate the factors involved in such transactions is indeed valuable to the two parties involved. Our top 20 highest-paid footballers collectively made 413 million in salary and bonus and another 162 million in endorsements for total earnings of 575 million. English Premier League players number the most followed by La Liga players. Among the most popular soccer leagues in the world, these clubs also have the top two highest average salaries per first team player. Per Sporting Intelligence’s annual Global Sports Salaries Survey 2016, EPL salaries average 3.2 million and La Liga salaries average $1.6 million.
+
+ This report attempts to analyze what attributes are most predictive of player’s wages, by generating simple and multiple linear regression models on FIFA 18 data obtained from Kaggle.com. Multiple variables are available to evaluation in order to find the best model to achieve our goal stated above. Based on that, we chose to examine Age, Nationality, Club, Overall rating, Potential Overall, Special, Value (Euros), Reactions and Preferred Positions. These are the most significant variables in predicting player’s wages in FIFA18. There are around 1000 observations in the sample data set.
+
+## Data Cleaning
+
+As part of cleaning up the data, we started by deleting all the columns except for ID, Name, Age, Nationality, Overall, Potential, Club, Value (in Euros), Wage (in Euros), Special, Reactions and Preferred Positions. We also deleted any rows that had missing values. We decided to look at the athletic variables that are the heavier influencers on the Overall and Potential variables’ values for the players, leading us to conclude that Reactions has the biggest influence on the Overall and Potential variables, thus we decided to maintain Reactions and delete the rest of the player attributes. Following, we converted the Value and Wages variables which ended either in “M” and “K” for example, 95M and 150K to 95,000,000 and 150,000. In the fifa18.csv file, there are players who have empty cells for Wage although are in a club, which might be a case of outliers. We came to a consensus to leave those in. Our group decided to delete players who have empty cell values for clubs as it would not be helpful in our analysis where we are looking at the relationship between wages and clubs. Their value will be zero and will lead to outliers with no valuable explanation. Furthermore, we decided to combine the 27 positions (represented by variables e.g. CAM, CM, RW, LW) into six different positions: Striker, Winger, Att-Mid, Def-Mid, Wingback, Center-Back and GK- each of these variables represent a group of variables (e.g. Winger= RW and LW) by taking the mean of those variables that we want to combine (Table 1). For the categorical variable “Prefered Positions”, we excluded every value (in case of two or more prefered positions) except the first one. We also switched the remaining preferred position to the corresponding one of the six summarized positions. We then randomized the rows and selected the first one thousand rows. We left GKs in to prove they are explainable outliers. They are fundamentally different than other players on the field.
+
+### APPENDIX A
+
+* Variable -> Definitions
+* Age -> Age of player in years
+* Overall -> Overall rating of player from 0-99
+* Potential -> Highest Overall rating that player can achieve from 0-99
+* Value -> Estimated value of player in the market in Euros
+* Wage -> Estimated current salary of player in Euros
+* Special -> Sum of atlhetic attributes minus Composure (psychological)
+* Reactions -> Estimated value of player's reaction to a play. From 0-99.
+* Preferred Position -> Position on the pitch where the players performs best.
+* Striker -> ST, CF, RF, LF
+* Winger -> RW, LW
+* AttMid -> CAM, CM, RM, LM, RAM, LAM
+* DefMid -> CDM, RDM, LDM
+* Centerback -> CB, RCB, LCB
+* Wingback -> LWB, RWB, LB, RB
+
+
+### Table 1
+* Striker -> RS, LS, ST, CF, LF, and RF
+* Winger -> LW and RW
+* AttMid -> CAM, LAM, RAM, RCM, LCM, LM, RM, and CM
+* DefMid -> CDM, LDM, and RDM
+* CenterBack -> CB, LCB, and RCB
+* Wingback -> LWB, RWB, LB, and RB
+* GK -> GK
+
+
+# Conclusion
+
+
+
+
+
+
+## Exploratory Analysis
+
+We begin our investigation of by creating a histogram for every predictor variable except for Preferred.Positions as the latter is a categorical variable. Following, for player's wages by creating a histogram and boxplot of their distribution in order to gain a better overview of trends and characteristics of the data set.
+
+```{r echo=TRUE}
+
+#Either use:
+ #file.choose()
+ #/Users/Beka/Downloads/Analysis/fifa18.csv
+ #C:\\Users\\rafae\\Desktop\\Project 1 Stats\\fifa18.csv
+ #/Users/ahmadosman-sw/Downloads/Project #1/Final Draft/fifa18.csv
+fifa <- read.csv("C:\\Users\\rafae\\Desktop\\Project 1 Stats\\fifa18.csv", header=TRUE, sep=",")
+
+attach (fifa)
+head(fifa, n=10)
+```
+
+``` {r echo = TRUE}
+par (mfrow = c(1, 2))
+hist(Age)
+boxplot(Age, horizontal = T, xlab="Age", main="Boxplot of Ages")
+hist(Overall)
+boxplot(Overall, horizontal = T, xlab="Overall", main="Boxplot of Overalls")
+hist(Potential)
+boxplot(Potential, horizontal = T, xlab="Potential", main="Boxplot of Potentials")
+hist(Value)
+boxplot(Value, horizontal = T, xlab="Value", main="Boxplot of Values")
+hist(Special)
+boxplot(Special, horizontal = T, xlab="Special", main="Boxplot of Specials")
+hist(Reactions)
+boxplot(Reactions, horizontal = T, xlab="Reaction", main="Boxplot of Reactions")
+hist(Striker)
+boxplot(Striker, horizontal = T, xlab="Striker", main="Boxplot of Strikers")
+hist(Winger)
+boxplot(Winger, horizontal = T, xlab="Winger", main="Boxplot of Wingers")
+hist(AttMid)
+boxplot(AttMid, horizontal = T, xlab="AttMid", main="Boxplot of AttMid(s)")
+hist(DefMid)
+boxplot(DefMid, horizontal = T, xlab="DefMid", main="Boxplot of DefMid(s)")
+hist(CenterBack)
+boxplot(CenterBack, horizontal = T, xlab="CenterBack", main="Boxplot of CenterBacks")
+hist(Wingback)
+boxplot(Wingback, horizontal = T, xlab="Wingback", main="Boxplot of Wingbacks")
+```
+
+
+``` {r echo=TRUE}
+hist(log(Value))
+```
+
+
+``` {r echo=TRUE}
+par (mfrow = c(1, 2))
+hist (Wage)
+boxplot (Wage, horizontal = T, xlab="Wage", main="Boxplot of Wages")
+```
+
+Anlayzing all the distributions we believe it is suitable to do a log transformation on the Value variable, since it is extremely right skewed. This may be explained because in the soccer world there are very few players that are worthy great amounts when compared to the universe of players. The histogram below shows how a log transformation makes the distribuion of Value more normal. From here on, we will proceed with log(Value).
+
+```{r echo=TRUE}
+hist(log(Wage))
+boxplot (log(Wage), horizontal = T, xlab="Wage", main="Boxplot of log(Wages)")
+```
+
+The distribution of log(Wage) is more symmetric. There is a high frequency bin on the left of the histogram log, that may be explained by the players that have just moved up from the academy teams into the professioanl team and receive minimun wage. Maybe even players that played once or twice for the professional team and had to be included in this fifa data set, but went back to the academy teams (e.g. U-21, U-19 teams). We will start by modelling wage, plot the residuals and then using Box-Cox analysis to determine the most appropriate transformation.
+
+```{r echo=TRUE}
+cormat = cor(fifa[,c(3,4,5,6,7,8,9,11,12,13,14,15,16)])
+round(cormat, 2)
+```
+
+``` {r echo=TRUE}
+library(corrplot)
+corrplot(cormat, method = "ellipse")
+```
+
+The ellpse matrix plot shows only negative linear relationship between Age and Potential. In the soccer world, generally very few players have high Potential values at a low age. Exceptions are "golden boys" such as Neymar, Mmbape, Gabriel Jesus, Deli Alli, Gotze etc. These are players that have were scouted for several years prior to player professional soccer. Therefore, when entering the soccer globe they already have high potential values. On the other hand it is more common for players to raise their potential value as they get older and prove themselves on the pitch. Based on the coefficient correlation table, there are some predictors that are extremely correlated and that may be indeed masking each other, for example Striker, Winger and AttMid, since in soccer these could be all categorized as Attacking role positions. Another example is the masking between DefMid, CenterBack and Wingback. These are all Defense role positions. 
+
+## First Order Model
+Here, we fit a first-order linear model with all predictors.
+
+``` {r echo=TRUE}
+logValue = log10(Value)
+
+model1 = lm(Wage~Age+Overall+Potential+logValue+Special+Reactions+Preferred.Positions+Striker+Winger+AttMid+DefMid+CenterBack+Wingback)
+
+summary(model1, correlation=FALSE)
+anova(model1)
+```
+
+The analysis of the ANOVA table suggests that Age, Overall, Potential, Reactions, Preferred.Positions, Striker and AttMid are significant predictors of a player's Wage. The coefficients tests show that only Age, Overall and Value significant for this model. The R-squared is 0.3539, with adjusted R-squared = 0.3417, which indicates that little of the variability in Wage is being explained by this model. This is because wr have not done a log transformation on the response variable. The residual standard error is 21340, which is small relative to the range of Wage values. We will analyze the residuals in order to verify the correctness of linearity of this model. 
+
+``` {r echo=TRUE}
+par (mfrow = c(1, 2))
+plot(model1,which = c(1,2))
+```
+
+Residual analysis suggests that there are outliers in this model. The residual analysis also suggest that the assumption of a linear relationship is reasonable. The Residuals vs Fitted plot suggest a non constant variance. We will do a Box-Cox analysis to verify the necessary transformation(s).
+
+``` {r echo=TRUE}
+library("MASS")
+boxcox(model1)
+```
+
+The Box-Cox analysis suggests an inverse power transformation, with λ between -0.1 and -0.2. The value zero, is just outside the 95% confidence interval, but we will try a log transformation first.
+
+
+#Log-Transformed model.
+```{r echo=TRUE}
+logWage = log10(Wage)
+
+new_df = fifa[,c(3,4,5,6,7,8,9,11,12,13,14,15,16)]
+new_df[5] = logWage
+new_df[4] = logValue
+cormat2 = cor(new_df)
+round(cormat2, 2)
+corrplot(cormat2, method = "ellipse")
+```
+
+The ellipse matrix plot shows a positive linear relationship between all variables except Age and Potential. It is similar to the first order model. There are still masking relationships between Attacking role positions and Defense role positions in this log-Transformed model.
+
+``` {r echo=TRUE}
+model2 = lm(logWage~Age+Overall+Potential+logValue+Special+Reactions+Preferred.Positions+Striker+Winger+AttMid+DefMid+CenterBack+Wingback)
+
+summary(model2, correlation=FALSE)
+anova(model2)
+```
+
+The log-transformed model ANOVA table suggests that Age, Potential, Overall, logValue, Striker and CenterBack are significant predictors of players' Wages. The coefficient tests suggest that Age, Potential, logValue, Special and CenterBack are significant predictors. The logValue significance code shows that it is a predictor of players' Wages - the player's value is first decided, generally in real life, before the player's wage is decided. The R-Squared is 0.6788, with adjusted R-squared = 0.6728, which indicates an improvement from the first order model.
+
+
+```{r echo=TRUE}
+attack = rowMeans(cbind(Striker, Winger))
+midfld = rowMeans(cbind(AttMid, DefMid))
+back = rowMeans(cbind(CenterBack, Wingback))
+pairs(cbind.data.frame(attack, midfld, back))
+```
+
+We chose to summarize player's positions into three variables as we proved that the previous variables were masking each other. Also, in soccer players can be grouped into offensive, midfielder and defensive players. Players in the same group perform similar functions in the field and have similar attributes.
+
+```{r echo=TRUE}
+new_df2 = new_df[,1:7]
+new_df2[8] = attack
+new_df2[9] = midfld
+new_df2[10] = back
+colnames(new_df2)[8] <- "Attack"
+colnames(new_df2)[9] <- "Mid"
+colnames(new_df2)[10] <- "Back"
+
+head(new_df2, n= 10)
+cormat3 = cor(new_df2)
+round(cormat3, 2)
+corrplot(cormat3, method = "ellipse")
+```
+
+Here we plotted the ellipse matrix to see their relation with log(Wage) with positions grouped by their respective areas on the field.
+
+# Residual Analysis of the Log-Transformed first-order model.
+``` {r echo=TRUE}
+par (mfrow = c(1, 2))
+plot(model2,which = c(1,2))
+```
+
+The Residuals vs Fitted plot shows a smooth fit line. The model also shows under prediction for both the smallest wages and the highest wages. Beside that, the variability of the residuals is highest in the middle.
+
+``` {r echo=TRUE}
+boxplot(model2$residuals, horizontal = T, xlab="Residuals")
+plot(model2$fitted.values, logWage)
+abline(0, 1, col="red")
+```
+
+The residual analysis of the log-transformed model looks a little better than in the first order model. Although, the abline is not closer to 0. There are residuals at both ends of the scale that are somewhat more extreme when compared to a normal distribution. The plot of observed vs fitted Wage looks good. The value of 3.0 on the y-axis is the minimum value of the logWage showing that there is a wide range of players that receive minimum wage. There is spread on the x-axis also for players with logWage = 3.3, logWage = 3.5, logWage = 3.7. For all these the model is underpredicting and over predicting certain players.
+
+# Box-Cox Optimal Transformation.
+``` {r echo=TRUE}
+par (mfrow = c(1,2))
+bcWage = Wage^(-0.2)
+model3 = lm (bcWage~Age+Overall+Potential+logValue+Special+Reactions+Preferred.Positions+Striker+Winger+AttMid+DefMid+CenterBack+Wingback)
+summary(model3)
+anova(model3)
+```
+
+The coefficient analysis of the Box-Cox optimal transformed model suggests that Age, Overall, logValue, Striker and CenterBack are significant predictor variables.
+
+``` {r echo=TRUE}
+plot(model3, which = c(1,2))
+```
+
+The model above fairly well. To interpret it, we first note that the response variable Wage has been transformed by raising to the power of, -0.2. This reverses the direction of the relationships between Wage and its predictors. Each of the following statements is made in the context of the other predictors being held at fixed values. 
+
+As expected the distribution of player's values is just as right skewed as their Wage. In the soccer world the number of players with large values is relatively small when compared to the whole. This causes the skewness of the variable.
+
+# Eliminating GoalKeepers
+
+Removing goal keepers from the model.
+
+```{r echo=TRUE}
+
+fifa2 = fifa[!Preferred.Positions== "GK",]
+head(fifa2, n=10)
+attach(fifa2)
+rm(fifa)
+
+```
+
+``` {r echo=TRUE}
+logWage = log10(Wage)
+logValue = log10(Value)
+bcWage = Wage^(-0.2)
+```
+
+``` {r echo=TRUE}
+attack = rowMeans(cbind(Striker, Winger))
+midfld = rowMeans(cbind(AttMid, DefMid))
+back = rowMeans(cbind(CenterBack, Wingback))
+```
+
+```{r echo=TRUE}
+pairs(cbind.data.frame(attack, midfld, back))
+```
+
+The pairs plot after eliminating goal keepers increased the spread between players when grouped by sections of the field. 
+
+The pairs plots shows a positive relation between all sections in the field although showing a more spread out relation between attack and back. In soccer, attacking role positions require a different set of skills than defensive role positions. This would explain why those two areas of the field show lower correlation than each of those compared to midfld.
+
+``` {r echo=TRUE}
+
+model4 = lm(logWage~Age+Overall+Potential+logValue+Special+Reactions+Preferred.Positions+attack+midfld+back, data = as.data.frame(fifa2))
+summary(model4)
+anova(model4)
+
+```
+
+
+The analysis of the ANOVA table shows that Age, Overall, Potential, logValue are signifanct predictors of a player's wage for this model. Model4 suggest an improvement from model3 with a greater R-squared. Model 4 suggests the same results from model2, therefore grouping players by areas of the field did not improve the model, neither did deleting goalkeepers.
+
+``` {r echo=TRUE}
+plot(model4, which = c(1,2))
+plot(model4$fitted.values, logWage)
+abline(0, 1, col="red")
+```
+
+The residual analysis of model4 suggests a better variance than the first order model. The abline is close to 0. There are still some outliers.
+
+## Interaction Analysis
+
+Here we do a stepwise with backward elimination using both direcitons.
+
+``` {r echo=TRUE}
+step.1st = step(model4, direction="both", k=log(nrow(fifa2)))
+summary(step.1st)
+anova(step.1st)
+```
+
+The stepwise procedure using the AIC criterion suggested this to be our best model: 
+    logWage ~ Age + Potential + logValue. This shows that the most significant predictor variables are Age, Potential and logValue, when trying to predict logWage.
+
+The next step would be to check the model with interactions.
+
+``` {r echo=TRUE}
+fifa2$Age.c = Age - mean(Age)
+fifa2$Potential.c = Potential - mean(Potential)
+fifa2$logValue.c = logValue - mean(logValue)
+attach(fifa2)
+full.int = lm(logWage ~ Age.c + Potential.c + logValue.c + Age.c * Potential.c + Age.c * logValue.c + Potential.c * logValue.c)
+summary (full.int)
+```
+
+The model with interactions presented above (R squared = 0.684) does better than the models 1 through 4.
+
+``` {r echo=TRUE}
+anova (full.int)
+```
+
+The ANOVA table of the stepwise procedure best model with all interactions shows that Age.c:Potential.c and Age.c:logValue.c are not as significant as the other interactions. Therefore we decided to remove such interactions.
+
+``` {r echo = TRUE}
+reduced.int = lm(logWage ~ Age.c + Potential.c + logValue.c + Potential.c * logValue.c)
+summary (reduced.int)
+anova(reduced.int)
+```
+
+Removing the interactions listed above decreased our R-squared value but suggested that all the predictor variables are significant now.
+
+``` {r echo=TRUE}
+reduced.int = lm(logWage ~ Age.c + Potential.c + logValue.c + Age.c * Potential.c + Potential.c * logValue.c)
+summary (reduced.int)
+anova(reduced.int)
+```
+
+Since taking out both variables made our model worse we decided to take the least significant out (Potential.c:logValue.c ) and maintain the other (Age.c:Potential.c). By doing so we have reached our best model so far with R-squared = 0.6838 and lower residual error = 0.3056.
+
+``` {r echo=TRUE}
+anova (step.1st, reduced.int)
+```
+
+Comparing the model suggest by the stepwise backward elimination with the reduced.int model we are able to show that
+the latter is better. A smaller p value for reduced.int shows that is statistically more significant than the model suggested through AIC criterion.
+
+
+
+Below we do one more stepwise to ensure that there is no more insignificant variables to remove.
+
+``` {r echo=TRUE}
+reduced.step = step(reduced.int, direction="both", k=log(nrow(fifa2)))
+summary(reduced.step)
+anova(reduced.step)
+```
+
+Based on our second attempt to do a stepwise backward there is no other interactions to remove. All of them are statistically significant.
+
+``` {r echo = TRUE}
+#residual analysis
+par(mfrow=c(1,2))
+plot(reduced.int)
+```
+The residual analysis of reduced.int show a more constant variance still being a little right skewed with some outliers. The Normal Q-Q plot shows the majority of observations are on the line with a few of them greater than the absolute value of 4.
+
+``` {r echo=TRUE}
+hatvals = hatvalues(reduced.int)
+fifa2[hatvals>0.06,]
+hat.colors = ifelse(hatvals > 0.06, 'red', 'black')
+pairs(cbind.data.frame(logWage, Age, Potential, logValue), col=hat.colors)
+```
+
+We observed from the Residuals vs Leverage plot that two players had greater hat values than the rest of the group which raised a concern wheter their values could be higher than the cut-off value. Therefore, we used leverage = 2*sqrt(5/886)) in which 5 are the number of parameters and 886 is the number of observations in our data set. the result is:  0.1502443. Therefore the two largest hat values are below the cut-off value for the Residuals vs Leverage plot.
+
+#Studentizied residuals plot against the fitted values.
+``` {r echo= TRUE}
+plot(reduced.int$fitted.values, rstudent(reduced.int), main = "Studentized Deleted Residuals", xlab="Fitted Log Wage", ylab= "Studen. Del. Residuals")
+```
+
+``` {r echo=TRUE}
+par (mfrow = c(1,2))
+boxplot (reduced.int$residuals, main="Final Model Residuals")
+plot (reduced.int, which=2, main="Final Model Residuals")
+
+#Anova or summary?
+#Check his checklst
+#Complete analysis on the resiudals plot and studentizied residuals plot
+```
+
+The box plot, along with the Q-Q plot of the final model residuals shows a few points in each tail that are wider than we would expect from a normal distribution, and some of the standardized residuals have an absolute value greater than 4.
+
+
+``` {r echo=TRUE, fig.height = 6}
+par (mfrow = c(1,2))
+library (car)
+avPlots(reduced.int)
+```
+
+The added variable plots show a trend for each predictor in the model, given all of the other predictors. The directions of these trends correspond to the parameter estimates.
+
+``` {r echo = TRUE}
+par (mfrow = c(1,1))
+fifa2$dffits = dffits (reduced.int)
+fifa2$Wage.fit = 10^reduced.int$fitted.values
+plot (seq (1, length (fifa2$dffits)), fifa2$dffits, 
+      main="DFFits, Final Model",
+      xlab="Row Number", ylab="DFFits")
+abline (0.1502443, 0, lty=2)
+abline (-0.1502443, 0, lty=2)
+
+```
+``` {r echo=TRUE}
+fifa2 [abs(fifa2$dffits) > 0.2, c(2,3,5,7,21)]
+my.colors = ifelse(abs(fifa2$dffits) > 0.2, 'red', 'black')
+pairs(cbind.data.frame(logWage, Age, Potential, logValue), col=my.colors)
+```
+
+DFFITS is a diagnostic meant to show how influential a point is in a statistical regression. The table above shows players that have a absolute dffits value greater than 0.2.
+
+# Interpretations
+
+The final model has the following parameter estimates:
+
+``` {r echo=TRUE}
+summary(reduced.int)$coefficients
+```
+
+Since the response variable, Wage, was transformed to a log scale, we only interpret the direction of these effects.
+
+The interaction effects are interpreted graphically. For example, plotting logWage vs Potential and coloring by Age, shows that the slope between logWage and Potential increases as Age increases.
+
+``` {r echo=TRUE}
+my.colors = rep ("red", length (logWage))
+my.colors [Age > 18] = "orange"
+my.colors [Age > 22] = "green"
+my.colors [Age > 30] = "blue"
+pairs(cbind.data.frame (logWage, Potential, Age), col=my.colors)
+```
+
+
+
+``` {r echo=TRUE}
+my.colors = rep ("red", length (logWage))
+my.colors [logValue > 5.54] = "orange"
+my.colors [logValue > 5.84] = "green"
+my.colors [logValue > 6.26] = "blue"
+plot(logWage ~ Potential, col=my.colors)
+abline(lm(logWage[logValue<5.54] ~ Potential[logValue < 5.54]),col='red')
+abline(lm(logWage[logValue>5.54&logValue<5.84] ~ Potential[logValue > 5.54&logValue<5.84]),col='orange')
+abline(lm(logWage[logValue>5.84&logValue<6.26] ~ Potential[logValue > 5.84&logValue<6.26]),col='green')
+abline(lm(logWage[logValue>6.26] ~ Potential[logValue > 6.26]),col='blue')
+```
+
+The plot abpve shows that players with the highest logValue (>6.26) have the steepest linear relationship between logWage and Potential. The other players have almost no linear relationship to negative linear relationships between logWage and Potential.
+
+``` {r echo=TRUE}
+plot (logWage ~ reduced.int$fitted.values, main="Log Wage vs Fitted", xlab="Fitted Log Wage", ylab="Log Wage", col='black')
+abline(0, 1, col="red")
+```
+
+Above we examined LOG Wage vs Fitted Log Wage Values.
+
+``` {r echo=TRUE}
+
+pred.all = as.data.frame (10^predict (model4, interval="prediction"))
+pred.all2 = round (pred.all, 1)
+pred.table = cbind.data.frame (Name, Wage, Age, Potential, Value, pred.all2$fit, pred.all2$lwr, pred.all2$upr)
+names (pred.table) [6:8] = c("Fit", "Lower", "Upper")
+pred.table$MOE = (pred.table$Upper / pred.table$Fit)
+pred.table [c(274,584,646,299,461,650),]
+
+```
+
+The table above shows predictions for 6 players with Wage rescaled to its original value using a 10^ transformation. Analyzing the table, the model is under predicting for high wage players, roughly correctly predicting for low and medium wage players. The odd observation in this table is Douglas. Although there might be an explanation for such abnormality. Douglas is a brazilian player that has always played in High-Payroll clubs in the world, despite being of medium Potential. A predictor variable that is not accounted in our data is which clubs players have played. Players in High-Payroll clubs tend to have a higher wage regardless of their skill level. The spread of margin of error is relatively the same for all 6 predictions.
+
+``` {r echo=TRUE}
+pred.all = as.data.frame (10^predict (reduced.int, interval="prediction"))
+pred.all2 = round (pred.all, 1)
+pred.table = cbind.data.frame (Name, Wage, Age, Potential, Value, pred.all2$fit, pred.all2$lwr, pred.all2$upr)
+names (pred.table) [6:8] = c("Fit", "Lower", "Upper")
+pred.table$MOE = (pred.table$Upper / pred.table$Fit)
+pred.table [c(274,584,646,299,461,650),]
+
+```
+
+When we do the same predictions for our reduced.int model we get different results. It seems like now it is over estimating high Wage players and more or less correctly estimating low Wage players. For model4 predictions Messi and Hazard were being under predicted. Also, the intervals or mean squared error for the predictions is narrower which shows an improvement from model4. It suggests that the upper limit of the prediction is four times bigger than the fitted value.
+
+
+``` {r echo=TRUE}
+my.colors = rep ("black", length(logWage))
+my.colors[c(274,584,646,299,461,650)] = 'red'
+symb = rep (1, length(logWage))
+symb[c(274,584,646,299,461,650)] = 2
+plot (logWage ~ reduced.int$fitted.values, main="Log Wage vs Fitted", xlab="Fitted Log Wage", ylab="Log Wage", col=my.colors, pch=symb)
+abline(0, 1, col="red")
+
+```
+
+The plot above shows were each of the players using in the predictions fall in the plot, using triangles. Douglas would be the triangle farthest away from the abline. His fitted logWage (3.95) is much lower than his actual LogWage(4.8).
+
+``` {r echo=TRUE}
+anova(model4, reduced.int)
+```
+
+
+# References
+
+https://www.forbes.com/sites/christinasettimi/2017/05/26/the-worlds-highest-paid-soccer-players-2017-cristiano-ronaldo-lionel-messi-lead-the-list/#74543c5e210e
+
+https://deadspin.com/chart-the-average-player-salaries-in-soccer-leagues-ar-1658856283
+
+

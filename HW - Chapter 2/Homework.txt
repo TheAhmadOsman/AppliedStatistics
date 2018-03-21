@@ -1,0 +1,13 @@
+I recommend doing the problems in this order:
+
+	GPA data:  2.4, 2.13, 2.23
+		-2.4.
+		-2.13 a, b, and c.
+		-2.23a, b, c, d, and e. 
+	Copier data:  2.5, 2.14
+		-2.5 a, d, and e.
+		-2.14 a and b.
+	Airfeight data:  2.6, 2.15, 2.25
+		-2.6 a, c, and d.  For 6d, you may use either a t-test or a 2-sided confidence interval.
+		-2.15 a and b.
+		-2.25 a, b, and d.

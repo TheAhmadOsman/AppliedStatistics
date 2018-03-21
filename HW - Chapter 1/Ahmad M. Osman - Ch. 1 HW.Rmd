@@ -1,0 +1,160 @@
+---
+title: "Chapter 1 HW"
+author: "Ahmad M. Osman"
+date: "9/7/2017"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r echo=FALSE}
+#Set the working directory
+setwd ("directory")
+```
+
+## Problem 1.19
+
+```{r p1.19, echo=TRUE}
+#Supply the file name for problem 1.19
+gpa <- read.table("CH01PR19.txt",header=F,col.names=c("GPA","ACT"))
+# This command makes data frame column names available as variables
+attach(gpa)
+
+# Plot the data
+plot(ACT,GPA)
+
+# Fit the regression model
+fit <- lm (GPA ~ ACT)
+fit
+b1 <- fit$coeff[2]
+b0 <- fit$coeff[1]
+anova(fit)
+ACTat30 <- b0 + b1*30
+ACTat30
+abline (b0,b1)
+ACTat31 <- b0 + b1*31
+ACTat31
+ACTat31 - ACTat30
+```
+The intercept is 2.11 GPA units and the slope is 0.0388 GPA unit per ACT score increment.
+
+Explanation: 
+    
+    a-	Β0 = 2.11405      Β1= 0.03883
+    
+        Y = 2.11405 + 0.03883 * X 
+    
+    b-	Yes. It looks good. 
+    
+    c-	GPA = 3.278863 for ACT = 30.
+    
+    d-	The change = 0.03882713.
+    
+
+## Problem 1.20
+
+```{r p1.20, echo=TRUE}
+#Supply the file name for problem 1.20
+machines <- read.table("CH01PR20.txt",header=F,col.names=c("minutes","copiers"))
+
+
+# This command makes data frame column names available as variables
+attach(machines)
+
+# Plot the data
+plot(copiers,minutes)
+
+# Fit the regression model
+fit <- lm (minutes ~ copiers)
+fit
+b1 <- fit$coeff[2]
+b0 <- fit$coeff[1]
+abline (b0,b1)
+anova(fit)
+```
+
+Explanation: 
+    
+    a-	Y=-0.5802 + 15.0352 *X
+    
+    b-	The line fits well.
+    
+    c-	For 0 copiers, it takes -0.58 minutes.
+    
+    d- The mean service time for 5 copiers = 74.59608 minutes.
+    
+## Problem 1.21
+
+```{r p1.21, echo=TRUE}
+#Supply the file name for problem 1.21
+aircraft <- read.table("CH01PR21.txt",header=F,col.names=c("broken ampules","shipment route"))
+
+# This command makes data frame column names available as variables
+attach(aircraft)
+
+# Plot the data
+plot(shipment.route,broken.ampules)
+
+# Fit the regression model
+fit <- lm (broken.ampules ~ shipment.route)
+fit
+b1 <- fit$coeff[2]
+b0 <- fit$coeff[1]
+abline(b0,b1)
+points(mean(shipment.route),mean(broken.ampules), col='red')
+```
+
+Explanation: 
+    
+    a-	Y = 10.2 + 4.0 * X. Fits well. 
+
+    b-	14.2
+
+    c-	As the slope is 4, once we plug it into the equation, every time x increases by 1, makes the answer 4.  
+
+    d-	Explained through the graph.
+    
+## Problem 1.22
+
+```{r p1.22, echo=TRUE}
+#Supply the file name for problem 1.22
+Plastic <- read.table("CH01PR22.txt",header=F,col.names=c("Hardness","Time"))
+
+
+# This command makes data frame column names available as variables
+attach(Plastic)
+
+# Plot the data
+plot(Time,Hardness)
+
+# Fit the regression model
+fit <- lm (Hardness ~ Time)
+fit
+b1 <- fit$coeff[2]
+b0 <- fit$coeff[1]
+abline(b0,b1)
+```
+
+Explanation: 
+    
+    a-	Y = 2.034x + 168.600 
+
+    b-	249.975
+
+    c-	The point of estimate when hardness increases by one is equal the slope (2.034)
+    
+## Problem 1.23
+    a- Using the formula "sum(fit$residuals)", the residual sum = -2.942091e-15. The residual is close to zero. The residual squared is 45.81761.
+    b- The anova table stated that the MSE = 0.3883. Standard deviation is the results of the square root of the MSE = 0.623GPA.
+    
+## Problem 1.24
+    a- Using the formula "sum(fit$residuals)", the residual sum = -1.176836e-14. The residual is close to zero. The residual squared is 3416.377.
+    b- The anova table stated that the MSE = 79. Standard deviation is the results of the square root of the MSE, SQRT(79) = 8.888 minutes.
+
+## Problem 1.25
+    a- I residual for the first case is 1.8.
+    b- MSE= 2.2. The variance is estimated by the MSE.

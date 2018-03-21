@@ -1,0 +1,243 @@
+---
+title: "IBM HR Attrition"
+author: "Ahmad, Beka, and Rafael"
+date: "12/5/2017"
+output:
+  pdf_document: default
+  word_document: default
+  html_document:
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+# Set echo to true and global figure size 
+knitr::opts_chunk$set(echo = TRUE, fig.width=8, fig.height=4)
+```
+
+```{r echo=TRUE}
+ibm <- read.csv(file="C:\\Users\\rafae\\Desktop\\AllvarIBM.csv", header=TRUE)
+attach(ibm)
+```
+
+# Tables and Plots
+
+##### Checking Attrition collinearity with possible significant predictors
+```{r echo=TRUE}
+ftable(Attrition, Gender)
+ftable(Attrition, Education)
+ftable(Attrition, EnvironmentSatisfaction)
+ftable(Attrition, JobInvolvement)
+ftable(Attrition, JobSatisfaction)
+ftable(Attrition, RelationshipSatisfaction)
+ftable(Attrition, WorkLifeBalance)
+```
+
+All the variables except EnvironmentSatisfaction, tested with the ftable function, show collinearity with Attrition. 
+
+##### Checking EnvironmentSatisfaction for collinearity with attrition
+``` {r echo=TRUE}
+plot(Attrition, EnvironmentSatisfaction, xlab="Attrition", ylab="Environment Satisfaction")
+abline(lm(EnvironmentSatisfaction~Attrition), col="red")
+```
+
+The EnvironmentSatisfaction variable does not seem to be collinear with Attrition, leading us to consider it as a categorical variable.
+
+##### Looking at the overall shape of the data in both Attrition and Gender means.
+``` {r echo=TRUE}
+par (mfrow = c(1, 2))
+
+barplot (table (ifelse (Attrition==1, "Yes", "No")), xlab="Attrition Status", ylab="# Subjects")
+# 0 for females - 1 for males
+barplot (table (ifelse (Gender==1, "Male", "Female")), xlab="Gender of subject", ylab="# Subjects")
+```
+
+``` {r echo=TRUE}
+hist(MonthlyIncome)
+```
+
+The Histogram of MonthlyIncome shows right skewness. We will perform log transformation on MonthlyIncome.
+
+``` {r echo=TRUE}
+logMonthlyIncome = log10(MonthlyIncome)
+hist(logMonthlyIncome)
+```
+
+##### Looking at the relationship between TotalWorkingYears and YearsAtCompany with the Log of MonthlyIncome
+``` {r echo=TRUE}
+par (mfrow = c(1, 2))
+plot(logMonthlyIncome, TotalWorkingYears, xlab="Log Monthly Income", ylab="Total Working Years ")
+abline(lm(TotalWorkingYears~logMonthlyIncome), col="red")
+plot(logMonthlyIncome, YearsAtCompany, xlab="Log Monthly Income", ylab="Years At Company ")
+abline(lm(YearsAtCompany~logMonthlyIncome), col="red")
+```
+
+There seems to be positive collinearity between working time in general income.
+
+##### Looking at the relationship between income and working years with the StockOptionLevel variable
+``` {r echo=TRUE}
+par (mfrow = c(1, 1))
+plot(logMonthlyIncome, StockOptionLevel, xlab="Log Monthly Income", ylab="Stock Option Level ")
+abline(lm(StockOptionLevel~logMonthlyIncome), col="red")
+```
+
+``` {r echo=TRUE}
+par (mfrow = c(1, 2))
+plot(TotalWorkingYears, StockOptionLevel, xlab="Total Working Years", ylab="Stock Option Level ")
+abline(lm(StockOptionLevel~TotalWorkingYears), col="red")
+plot(YearsAtCompany, StockOptionLevel, xlab="Years At Company", ylab="Stock Option Level ")
+abline(lm(StockOptionLevel~YearsAtCompany), col="red")
+
+```
+
+There does not seem be a relationship between MonthlyIncome, TotalWorkingYears, and YearsAtCompany with the StockOptionLevel.
+
+##### Exploring Age, Attrition, and Overtime 
+``` {r echo=TRUE}
+par (mfrow = c(1, 1))
+plot (jitter (Attrition, 0.1) ~ Age, col=ifelse (OverTime==0, 1, 2), pch=ifelse
+(OverTime==0, 1, 2), xlab="Age, years", ylab="Attrition Status (0=No, 1=Yes)")
+lines (lowess (Age, Attrition), col='darkgreen')
+legend(50, 0.6, c("0", "1"), col=c(1, 2), cex=0.6, pch=c(1,2), title="Overtime")
+```
+
+The plot shows that there is a relationship between Overtime and Attrition.
+
+##### Fitting first-order logistic regression model
+``` {r echo=TRUE}
+ibm.logit <- glm(Attrition ~ Gender + Education + JobSatisfaction + JobInvolvement + RelationshipSatisfaction + StockOptionLevel + logMonthlyIncome + OverTime + PerformanceRating + WorkLifeBalance + DistanceFromHome + Age + TotalWorkingYears + TrainingTimesLastYear + YearsAtCompany + YearsInCurrentRole + YearsSinceLastPromotion + YearsWithCurrManager + as.factor(EnvironmentSatisfaction) + as.factor(MaritalStatus) ,family = binomial)
+summary(ibm.logit)
+anova(ibm.logit)
+```
+
+##### Stepwise on the first model with backward elimination using both direcitons.
+``` {r echo=TRUE}
+ibm.logit.step = step (ibm.logit, directon='both', k=log(nrow(ibm)))
+```
+
+##### Fitting the model after the stepwise backward elimination
+``` {r echo=TRUE}
+
+m2 = glm (Attrition ~ RelationshipSatisfaction + DistanceFromHome + YearsSinceLastPromotion + JobInvolvement + as.factor(EnvironmentSatisfaction) + JobSatisfaction + YearsWithCurrManager + as.factor(MaritalStatus) + logMonthlyIncome + OverTime, family = binomial)
+summary(m2)
+```
+
+All the variables are significant in our second model here.
+
+##### Model 2 with interactions
+``` {r echo=TRUE}
+m2.int =  glm(Attrition ~ factor(EnvironmentSatisfaction) * factor(MaritalStatus) + factor(EnvironmentSatisfaction) * logMonthlyIncome + factor(EnvironmentSatisfaction) * RelationshipSatisfaction + factor(EnvironmentSatisfaction) * DistanceFromHome + factor(EnvironmentSatisfaction) * YearsSinceLastPromotion + factor(EnvironmentSatisfaction) * JobInvolvement + factor(EnvironmentSatisfaction) * JobSatisfaction + factor(EnvironmentSatisfaction) * YearsWithCurrManager + factor(EnvironmentSatisfaction) * OverTime + factor(MaritalStatus) * logMonthlyIncome + factor(MaritalStatus) * RelationshipSatisfaction + factor(MaritalStatus) * DistanceFromHome + factor(MaritalStatus) * YearsSinceLastPromotion + factor(MaritalStatus) * JobInvolvement + factor(MaritalStatus) * JobSatisfaction + factor(MaritalStatus) * YearsWithCurrManager + factor(MaritalStatus) * OverTime + logMonthlyIncome * RelationshipSatisfaction + logMonthlyIncome * DistanceFromHome + logMonthlyIncome * YearsSinceLastPromotion + logMonthlyIncome * JobInvolvement + logMonthlyIncome * JobSatisfaction + logMonthlyIncome * YearsWithCurrManager + logMonthlyIncome * OverTime + RelationshipSatisfaction * DistanceFromHome + RelationshipSatisfaction * YearsSinceLastPromotion + RelationshipSatisfaction * JobInvolvement + RelationshipSatisfaction * JobSatisfaction + RelationshipSatisfaction * YearsWithCurrManager + RelationshipSatisfaction * OverTime + DistanceFromHome * YearsSinceLastPromotion + DistanceFromHome * JobInvolvement + DistanceFromHome * JobSatisfaction + DistanceFromHome * YearsWithCurrManager + DistanceFromHome * OverTime + YearsSinceLastPromotion * JobInvolvement + YearsSinceLastPromotion * JobSatisfaction + YearsSinceLastPromotion * YearsWithCurrManager + YearsSinceLastPromotion * OverTime + JobInvolvement * JobSatisfaction + JobInvolvement * YearsWithCurrManager + JobInvolvement * OverTime + JobSatisfaction * YearsWithCurrManager + JobSatisfaction * OverTime + YearsWithCurrManager * OverTime, family = binomial)
+summary(m2.int)
+```
+
+No we will do stepwise backward elimination on the second model with interactions
+
+##### Stepwise backward elimination on model 2 with interactions
+``` {r echo=TRUE}
+m2.int.step = step (m2.int, directon='both', k=log(nrow(ibm)))
+summary(m2.int.step)
+```
+
+This seems to be our best and final model, the stepwise backward elimination seems added one interaction only to our model, which is "logMonthlyIncome:YearsWithCurrManager" and nothing was found removed. The significant levels of all the variables is the same except for "RelationshipSatisfaction" and "logMonthlyIncome:YearsWithCurrManager", showing that the predictors are not highly collinear. 
+
+The EnvironmentSatisfaction, logMonthlyIncome and OverTime predictors appear to have the highest magnitude in their Z-values. We will consider those three predictors our most important. 
+
+``` {r echo=TRUE}
+YCMC = YearsWithCurrManager
+YCMC[YearsWithCurrManager < 2] = 1
+YCMC[YearsWithCurrManager < 3] = 2
+YCMC[YearsWithCurrManager < 7] = 3
+YCMC[YearsWithCurrManager >= 7] = 4
+```
+
+``` {r echo=TRUE}
+salseq = seq (min(logMonthlyIncome), max(logMonthlyIncome), by=.05)
+fitprob0 = predict (m2.int.step, data.frame (logMonthlyIncome=salseq, EnvironmentSatisfaction = 3, MaritalStatus= 1, RelationshipSatisfaction = mean(RelationshipSatisfaction), DistanceFromHome = mean(DistanceFromHome), YearsSinceLastPromotion = mean(YearsSinceLastPromotion), JobInvolvement = mean(JobInvolvement), JobSatisfaction = mean(JobSatisfaction), YearsWithCurrManager = 2, OverTime = 1), type='response')
+
+fitprob1 = predict (m2.int.step, data.frame (logMonthlyIncome=salseq, EnvironmentSatisfaction = 3, MaritalStatus= 1, RelationshipSatisfaction = mean(RelationshipSatisfaction), DistanceFromHome = mean(DistanceFromHome), YearsSinceLastPromotion = mean(YearsSinceLastPromotion), JobInvolvement = mean(JobInvolvement), JobSatisfaction = mean(JobSatisfaction), YearsWithCurrManager = 3, OverTime = 1), type='response')
+
+fitprob2 = predict (m2.int.step, data.frame (logMonthlyIncome=salseq, EnvironmentSatisfaction = 3, MaritalStatus= 1, RelationshipSatisfaction = mean(RelationshipSatisfaction), DistanceFromHome = mean(DistanceFromHome), YearsSinceLastPromotion = mean(YearsSinceLastPromotion), JobInvolvement = mean(JobInvolvement), JobSatisfaction = mean(JobSatisfaction), YearsWithCurrManager = 7, OverTime = 1), type='response')
+
+plot(logMonthlyIncome, jitter(Attrition, .1), col=ifelse
+(Attrition==0, "blue", "red"))
+lines (salseq, fitprob0, col='red')
+lines (salseq, fitprob1, col='blue')
+lines (salseq, fitprob2, col='green')
+
+```
+
+##### ROC Curve on model 2 without interactions
+``` {r echo =TRUE}
+library(ROCR)
+
+pred1 <- prediction(m2$fitted.values, m2$y)
+perf1 <- performance(pred1, "tpr", "fpr")
+auc1 <- performance(pred1,"auc")@y.values[[1]]
+auc1
+
+plot(perf1,lwd=2,col=2)
+abline(0,1)
+legend(0.5,0.4, c(paste("AUC=", round(auc1,2),sep = "")), cex=0.8,lwd=2, col=2)
+```
+
+##### ROC Curve on model 2 after interactions and stepwise backward elimination 
+``` {r echo =TRUE}
+pred2 <- prediction(m2.int.step$fitted.values, m2.int.step$y)
+perf2 <- performance(pred2, "tpr", "fpr")
+auc2 <- performance(pred2,"auc")@y.values[[1]]
+auc2
+
+plot(perf1,lwd=2,col=2)
+abline(0,1)
+legend(0.5,0.4, c(paste("AUC=", round(auc2,2),sep = "")), cex=0.8,lwd=2, col=2)
+```
+
+The ROC curves of both of our second and final model, before and with interactions, show the same thing.
+What to comment here?
+
+``` {r echo=T}
+roc.table = cbind.data.frame(pred2@tn, pred2@fn, pred2@fp, pred2@tp,
+ pred2@cutoffs)
+names (roc.table) = c("TrueNeg", "FalseNeg", "FalsePos", "TruePos", "Cutoff")
+attach (roc.table)
+roc.table$sensitivity = TruePos / (TruePos + FalseNeg) # True positive rate
+roc.table$specificity = TrueNeg / (TrueNeg + FalsePos) # 1 - False pos rate
+roc.table$FalsePosRate = 1 - roc.table$specificity
+roc.table$PctCorrect = (TruePos + TrueNeg) /
+ (TruePos + TrueNeg + FalsePos + FalseNeg)
+```
+
+Sensitivity is the probability of the model correctly predicting someone is leaving. Specificity is the probability of correctly predicting someone is not leaving.
+
+``` {r echo=TRUE}
+roc.table[max(roc.table$PctCorrect) == roc.table$PctCorrect,]
+
+roc.table$distance = sqrt((roc.table$sensitivity-1)^2 + (roc.table$specificity -1)^2)
+
+roc.table[which.min(roc.table$distance),]
+```
+
+What to comment here?
+
+#
+``` {r echo=TRUE}
+# Comment about high cooks distance row 753.
+library(car)
+influenceIndexPlot(m2.int.step, id.n=3)
+
+```
+
+``` {r echo = FALSE}
+# Are we missing anything in between the models?
+# Follow the same structure of the first project
+# I went ahead adn cleaned up the file and made it more systematic
+# What do we need? Do we need more stuff in between?
+# Reverse the Environment Satisfaction axis at the beggining
+# StockLevelOption plots - should we leave them?
+```
+
+``` {r echo=TRUE}
+# Make a comment about each exp.
+exp(m2.int.step$coefficients)
+```

@@ -1,0 +1,11 @@
+	3.6a-c (Skip the test in part c, but still answer the question about whether the normality assumption appears reasonable)
+	
+	3.11a,b  (Note: only the X variable and the residuals are provided in the data set)
+	I am changing homework problem 3.11(b) to extra credit and will have more to say about it in class today.  I've you've done any work on it, you will get some credit.
+
+
+	3.15
+		In part (a), plot the data with the fitted regression line and report the estimated slope and intercept.  Fit the model to concentration vs. time, without transformation
+	
+	3.16
+		In part (b), just use the boxcox function in R and report the plot obtained from that function.  You do not need to evaluate SSE at any specific values of lambda.  The boxcox function requires the MASS package
